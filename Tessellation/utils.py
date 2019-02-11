@@ -5,6 +5,8 @@ from scipy.spatial import KDTree, Delaunay
 
 def cart2pol(coords):
 
+    # Cartesian coordinates to polar.
+
     x = coords[:,0]
     y = coords[:,1]
     rho = np.sqrt(x**2 + y**2)
@@ -14,6 +16,8 @@ def cart2pol(coords):
 
 def pol2cart(coords):
 
+    # Polar coordinates to cartesian.
+
     theta = coords[:,0]
     rho = coords[:,1]
     x = rho * np.cos(theta)
@@ -21,13 +25,19 @@ def pol2cart(coords):
 
     return np.stack([x, y], 1)
 
-def display_tessellation(points, figsize=(15,15), s=1, overlay=True):
+def display_tessellation(points, figsize=(15,15), s=1):
+    
+    # Displays 2D points as a scatter graph
+
     plt.figure(figsize=figsize)
     plt.scatter(points[:,0], points[:,1],s=s,c='black')
     plt.show()
     return
 
 def display_stats(points, figsize=(15,8), k=7):
+
+    # Shows how node density varies with eccentricity
+    # in a retina tessellation.
     
     nbs = KDTree(points)
 
@@ -49,6 +59,10 @@ def display_stats(points, figsize=(15,8), k=7):
     return
 
 def normalize(points):
+
+    # Constrains the retina tessellation to a unit
+    # circle.
+
     points = cart2pol(points)
     points[:,1] /= np.max(points[:,1])
     points = pol2cart(points)
@@ -57,6 +71,10 @@ def normalize(points):
 
 
 def randomize(points):
+
+    # randomly shifts the position of all points in the
+    # retina tessellation to a maximum distance of the
+    # average distance to their nearest neighbours.
 
     nbs = KDTree(points)
 
@@ -77,6 +95,11 @@ def randomize(points):
     return normalize(points)
 
 def point_gen(points, num_iters=1, mode='sierpinski'):
+
+    # Generates points using delaunay triangulation
+    # and barycentre or sierpinski methods for generating
+    # points.
+
     points = points
 
     for i in range(num_iters):

@@ -1,12 +1,29 @@
-from utils import *
+
+import time
 import numpy as np
 from pyflann import *
 from scipy.spatial.distance import cdist
-import time
+
+from utils import *
+
+# Authors: George Killick 
+
 
 class SSNN:
     
     def __init__(self, n_nodes, fovea, method='auto'):
+
+        """ Self Similar Neural Network for generation retina
+            tessellations.
+
+            Parameters
+            ----------
+            n_nodes: number of nodes desired in the tessellation
+            fovea: size of the foveal region of the retina tessellation.
+            method: which backend to use when computing nearest 
+            neighbours.
+
+        """
         
         self.n_nodes = n_nodes
         self.fovea = fovea
@@ -17,12 +34,25 @@ class SSNN:
                       
     
     def fit(self, num_iters=20000, initial_alpha=0.1, final_alpha=0.0005, verbose=True):
+
+        """ Uses the Self-Similar-Neural-Network algorithm to organize n number of nodes
+            into a retina style tessellation. See README for more information.
+
+            Parameters
+            ----------
+            num_iters: Number of iterations to run the algorithm for
+            initial_alpha: initial learning rate
+            final_alpha: final learning rate at end of training.
+            verbose: displays helpful stats during the fit process
+
+            Return: None.
+        """
         
         learning_rate = SSNN._alpha_schedule(initial_alpha, final_alpha, num_iters, num_iters//4)
 
         start = time.time()
 
-        get_neighbours = self.select_method(self.method)
+        get_neighbours = self._select_method(self.method)
         
         for i in range(num_iters):
             
@@ -73,6 +103,19 @@ class SSNN:
             print("\nTime taken: " + str(time.time()-start))
 
     def generative_fit(self, steps, num_iters=20000, initial_alpha=0.1, final_alpha=0.0005, verbose=True):
+
+        """ Uses a point generation method based on delaunay triangulation
+            to decrease training times. See README for more info.
+
+            Parameters
+            ----------
+            steps: Number of iterations for generating points.
+
+            -- remaining parameters same as normal fit function.
+
+            Return: None
+
+        """
         
         start = time.time()
 
@@ -81,18 +124,19 @@ class SSNN:
 
         SSNN.fit(self, num_iters, initial_alpha, final_alpha, verbose)
         
-        g_iters = 1250
-        g_alpha = ((g_iters/num_iters) * initial_alpha) + final_alpha
+        g_iters = 2000
+        g_alpha = ((g_iters/(num_iters * 0.75)) * initial_alpha) + final_alpha
 
         for i in range(steps):
+
             print("\nAnnealing new points...\n")
             self.weights = point_gen(self.weights, 1, 'sierpinski')
             self.weights = randomize(self.weights)
             self.n_nodes = self.weights.shape[0]
 
             if(i == steps-1):
-                g_iters *= 2
-                g_alpha = ((g_iters/num_iters) * initial_alpha) + final_alpha
+                g_iters += 1000
+                g_alpha = ((g_iters/(num_iters * 0.75)) * initial_alpha) + final_alpha
 
             SSNN.fit(self, g_iters, g_alpha, final_alpha, verbose)
         
@@ -103,14 +147,56 @@ class SSNN:
         return 
 
     def display_tessellation(self, figsize=(15,15), s=1):
+
+        """ Class method wrapper for display_tessellation function
+            from utils for ease of use.
+
+            Parameters
+            ----------
+
+            figsize: Equivalent to matplotlib.pyplot figsize
+            s: size of points on scatter graph
+
+            Returns: None
+
+        """
         display_tessellation(self.weights, figsize, s)
         return
     
     def display_stats(self, figsize=(15,8), k=7):
+
+        """ Class method wrapper for display stats function
+            from utils for ease of use.
+
+            Parameters
+            ----------
+
+            figsize: Equivalent to matplotlib.pyplot figsize
+            k: number of neighbours to calculate  stats with.
+
+            Returns: None
+
+        """
+
         display_stats(self.weights, figsize, k)
         return
 
-    def select_method(self, method):
+    def _select_method(self, method):
+
+        """ Selects the nearest neighbour backend to use.
+
+            Parameters
+            ----------
+
+            method:
+                - 'default': Uses a Scipy brute force search
+                - 'flann': Uses FLANN
+                - 'auto': Selects best backend based on number
+                of nodes and available hardware.
+
+            Returns: Function to compute nearest neighbours
+
+        """
 
         if (method == 'default'):
             print("Using Scipy.")
@@ -134,16 +220,53 @@ class SSNN:
                 return self._flann_neighbours
 
     def _bf_neighbours(self, X, Y): 
+
+        """ Canonical wrapper for scipy's bruteforce nearest 
+            neighbour search.
+            
+            Parameters
+            ----------
+            X: update vectors
+            Y: network weights
+
+            Return: index of nearest neighbour for each
+            update vector.
+        """
+
         dists = cdist(X, Y)
         indeces = np.argmin(dists, axis=1)
         return indeces
 
     def _flann_neighbours(self, X, Y):
+
+        """ Canonical wrapper for FLANN nearest neighbour 
+            search.
+            
+            Parameters
+            ----------
+            X: update vectors
+            Y: network weights
+
+            Return: index of nearest neighbour for each
+            update vector.
+        """
         indeces, dists = self.flann.nn(Y, X, 1, algorithm="kdtree", branching=16, iterations=5, checks=16) 
         return indeces
 
     @staticmethod
     def _init_weights(n_nodes):
+
+        """ Initializes weights for the SSNN
+
+            Parameters
+            ----------
+            n_nodes: number of nodes in tessellation i.e.
+            number of nodes in SSNN.
+
+            Return: Initialized weights as a numpy array.
+
+        """
+
         r = np.random.uniform(1, 0, n_nodes)
         th = 2 * np.pi * np.random.uniform(1, 0, n_nodes)
         return pol2cart(np.array([th, r]).T)
@@ -151,6 +274,24 @@ class SSNN:
 
     @staticmethod
     def _alpha_schedule(initial_alpha, final_alpha, num_iters, split):
+
+        """ Creates a learning rate schedule for the SSNN.
+            Constant learning rate for first "split" of iterations
+            and then linearly annealing for the remainder.
+
+            Parameters
+            ----------
+            initial_alpha: starting learning rate.
+            final_alpha: final learning rate.
+            num_iters: number of iterations, equivalent to number
+            of iterations to train the network for.
+            split: decides when to start annealing, typical after 25% 
+            oftotal iterations.
+
+            Return: Numpy array for learning rate; length num_iters.
+
+        """
+
         static = split
         decay = num_iters - static
         static_lr = np.linspace(initial_alpha, initial_alpha, static)
