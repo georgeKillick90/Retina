@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.spatial import KDTree
+from scipy.spatial import KDTree, Delaunay
+
 
 def cart2pol(coords):
 
@@ -22,7 +23,7 @@ def pol2cart(coords):
 
 def display_tessellation(points, figsize=(15,15), s=1, overlay=True):
     plt.figure(figsize=figsize)
-    plt.scatter(points[:,0], points[:,1],s=s)
+    plt.scatter(points[:,0], points[:,1],s=s,c='black')
     plt.show()
     return
 

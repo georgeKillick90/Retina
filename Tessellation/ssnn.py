@@ -10,11 +10,7 @@ class SSNN:
         
         self.n_nodes = n_nodes
         self.fovea = fovea
-        
-        r = np.random.uniform(1, 0, self.n_nodes)
-        th = 2 * np.pi * np.random.uniform(1, 0, self.n_nodes)
-        
-        self.weights = pol2cart(np.array([th, r]).T)
+        self.weights = SSNN._init_weights(n_nodes)
         self.method = method
         self.use_gpu = False
         self.flann = FLANN()
@@ -59,6 +55,7 @@ class SSNN:
             I = pol2cart(I)
             I = I[cull]
             
+            # Gets the nearest update vector for each weight
             index = get_neighbours(I, self.weights)
             
             # Update the weights 
@@ -68,6 +65,7 @@ class SSNN:
             if (verbose):
                 sys.stdout.write('\r'+str(i + 1) +"/" + str(num_iters))
         
+        # Constrain to unit circle
         normalize(self.weights)
 
         if(verbose):
@@ -78,14 +76,25 @@ class SSNN:
         
         start = time.time()
 
+        self.n_nodes = self.n_nodes // (4 ** steps)
+        self.weights = SSNN._init_weights(self.n_nodes)
+
         SSNN.fit(self, num_iters, initial_alpha, final_alpha, verbose)
         
+        g_iters = 1250
+        g_alpha = ((g_iters/num_iters) * initial_alpha) + final_alpha
+
         for i in range(steps):
             print("\nAnnealing new points...\n")
             self.weights = point_gen(self.weights, 1, 'sierpinski')
             self.weights = randomize(self.weights)
             self.n_nodes = self.weights.shape[0]
-            SSNN.fit(self, 5000, 0.033, 0.0005, verbose)
+
+            if(i == steps-1):
+                g_iters *= 2
+                g_alpha = ((g_iters/num_iters) * initial_alpha) + final_alpha
+
+            SSNN.fit(self, g_iters, g_alpha, final_alpha, verbose)
         
         if(verbose):
             print("\nFinal node count: " + str(self.weights.shape[0]))
@@ -93,12 +102,8 @@ class SSNN:
         
         return 
 
-    def show_tessellation(self, figsize=(15,15), s=1, overlay=False):
-        plt.figure(figsize=figsize)
-        plt.scatter(self.weights[:,0], self.weights[:,1],s=s)
-        if(overlay):
-            plt.scatter(self.original_weights[:,0], self.original_weights[:,1], s=s+5, c='red')
-        plt.show()
+    def display_tessellation(self, figsize=(15,15), s=1):
+        display_tessellation(self.weights, figsize, s)
         return
     
     def display_stats(self, figsize=(15,8), k=7):
@@ -108,19 +113,24 @@ class SSNN:
     def select_method(self, method):
 
         if (method == 'default'):
+            print("Using Scipy.")
             return self._bf_neighbours
 
         elif(method == 'flann'):
+            print("Using FLANN.")
             return self._flann_neighbours
 
         elif(method == 'auto'):
             if(self.n_nodes <= 256):
+                print("Using Scipy.")
                 return self._bf_neighbours
 
             elif(self.n_nodes <= 20000 and self.use_gpu):
+                print("Using GPU accelerated Pytorch.")
                 return self._torch_neighbours
 
             else:
+                print("Using FLANN.")
                 return self._flann_neighbours
 
     def _bf_neighbours(self, X, Y): 
@@ -131,6 +141,13 @@ class SSNN:
     def _flann_neighbours(self, X, Y):
         indeces, dists = self.flann.nn(Y, X, 1, algorithm="kdtree", branching=16, iterations=5, checks=16) 
         return indeces
+
+    @staticmethod
+    def _init_weights(n_nodes):
+        r = np.random.uniform(1, 0, n_nodes)
+        th = 2 * np.pi * np.random.uniform(1, 0, n_nodes)
+        return pol2cart(np.array([th, r]).T)
+
 
     @staticmethod
     def _alpha_schedule(initial_alpha, final_alpha, num_iters, split):
