@@ -5,7 +5,7 @@ from scipy.spatial.distance import cdist
 
 class SSNN:
     
-    def __init__(self, n_nodes, fovea):
+    def __init__(self, n_nodes, fovea, method='default'):
         
         self.n_nodes = n_nodes
         self.fovea = fovea
@@ -14,9 +14,11 @@ class SSNN:
         th = 2 * np.pi * np.random.uniform(1, 0, self.n_nodes)
         
         self.weights = pol2cart(np.array([th, r]).T)
+        self.method = method
+        self.flann = FLANN()
                       
     
-    def fit(self, num_iters=20000, initial_alpha=0.1, final_alpha=0.0005, d_exp=1, use_flann=True, verbose=True):
+    def fit(self, num_iters=20000, initial_alpha=0.1, final_alpha=0.0005, verbose=True):
         
         learning_rate = SSNN._alpha_schedule(initial_alpha, final_alpha, num_iters, num_iters//4)
         
@@ -30,7 +32,7 @@ class SSNN:
    
             # Dilation
             d = np.exp((2 * np.random.uniform() -1) * np.log(8))
-            I[:,1] *= (d ** d_exp)
+            I[:,1] *= d
             
             I = pol2cart(I)
             
@@ -51,11 +53,12 @@ class SSNN:
             I = pol2cart(I)
             I = I[cull]
             
-            if(use_flann):
-                flann = FLANN() 
-                index, dists = flann.nn(self.weights, I, 1, algorithm="kdtree", branching=16, iterations=5, checks=16)  
+            if(self.method == 'flann'):
+                index, dists = self.flann.nn(self.weights, I, 1, 
+                    algorithm="kdtree", branching=16, iterations=5, checks=16)  
             else:
                 index = SSNN._bf_neighbours(I, self.weights)
+            
             # Update the weights 
             self.weights[index] -= (self.weights[index] - I) * alpha
  
