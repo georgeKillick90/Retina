@@ -119,12 +119,20 @@ class SSNN:
         
         start = time.time()
 
+        # Calculates the required starting node size for number of
+        # generative iterations. 
+        # Node count x 4 for Sierpinski.
+        # Node count x 3 for Barycentre.
+
         self.n_nodes = self.n_nodes // (4 ** steps)
         self.weights = SSNN._init_weights(self.n_nodes)
 
         SSNN.fit(self, num_iters, initial_alpha, final_alpha, verbose)
         
+        # Number of training iterations after point generation
         g_iters = 2000
+
+        # Calculates a new initial alpha
         g_alpha = ((g_iters/(num_iters * 0.75)) * initial_alpha) + final_alpha
 
         for i in range(steps):
@@ -135,10 +143,12 @@ class SSNN:
             self.n_nodes = self.weights.shape[0]
 
             if(i == steps-1):
+                # Slightly increase number of iterations on final run,
+                # almost like polishing everything up.
                 g_iters += 1000
                 g_alpha = ((g_iters/(num_iters * 0.75)) * initial_alpha) + final_alpha
 
-            SSNN.fit(self, g_iters, g_alpha, final_alpha, verbose)
+            self.fit(g_iters, g_alpha, final_alpha, verbose)
         
         if(verbose):
             print("\nFinal node count: " + str(self.weights.shape[0]))
