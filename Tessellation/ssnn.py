@@ -65,12 +65,6 @@ class SSNN:
         
         normalize(self.weights)
 
-    def set_weights(self, weights):
-        self.weights = weights
-
-    def get_weights(self):
-        return self.weights
-
     def show_tessellation(self, figsize=(15,15), s=1, overlay=False):
         plt.figure(figsize=figsize)
         plt.scatter(self.weights[:,0], self.weights[:,1],s=s)
