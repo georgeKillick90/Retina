@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.spatial import KDTree, Delaunay
 
+# Author: George Killick
 
 def cart2pol(coords):
 
@@ -128,7 +129,7 @@ def point_gen(points, num_iters=1, mode='sierpinski'):
 
 
 def dilate(points, fovea, f_density):
-    
+
     x = normalize(points)
     x = cart2pol(x)
     x[:,1] *= (1/(fovea + ((2*np.pi*fovea)/f_density)) ** x[:,1] ** f_density)
