@@ -126,3 +126,22 @@ def point_gen(points, num_iters=1, mode='sierpinski'):
 
     return normalize(points)
 
+
+def dilate(points, fovea, f_density):
+    
+    x = normalize(points)
+    x = cart2pol(x)
+    x[:,1] *= (1/(fovea + ((2*np.pi*fovea)/f_density)) ** x[:,1] ** f_density)
+    x = pol2cart(x)
+    return normalize(x)
+
+
+
+
+
+
+
+
+
+
+
