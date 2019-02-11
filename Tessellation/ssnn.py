@@ -68,16 +68,32 @@ class SSNN:
         
         normalize(self.weights)
 
+    def generative_fit(self, steps, num_iters=20000, initial_alpha=0.1, final_alpha=0.0005, verbose=True):
+        
+        SSNN.fit(self, num_iters, initial_alpha, final_alpha, verbose)
+        
+        for i in range(steps):
+            print("\nAnnealing new points...\n")
+            self.weights = point_gen(self.weights, 1, 'sierpinski')
+            self.weights = randomize(self.weights)
+            SSNN.fit(self, 5000, 0.033, 0.0005, verbose)
+        
+        print("\nFinished.")
+        
+        return 
+
     def show_tessellation(self, figsize=(15,15), s=1, overlay=False):
         plt.figure(figsize=figsize)
         plt.scatter(self.weights[:,0], self.weights[:,1],s=s)
         if(overlay):
             plt.scatter(self.original_weights[:,0], self.original_weights[:,1], s=s+5, c='red')
         plt.show()
+        
         return
     
     def display_stats(self, figsize=(15,8), k=7):
         display_stats(self.weights, figsize, k)
+        
         return
 
     @staticmethod
