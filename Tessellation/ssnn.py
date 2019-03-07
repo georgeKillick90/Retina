@@ -4,7 +4,7 @@ import numpy as np
 from pyflann import *
 from scipy.spatial.distance import cdist
 
-from utils import *
+from .utils import *
 
 # Authors: George Killick 
 
@@ -31,6 +31,7 @@ class SSNN:
         self.method = method
         self.use_gpu = False
         self.flann = FLANN()
+        self.d_exp = 1
                       
     
     def fit(self, num_iters=20000, initial_alpha=0.1, final_alpha=0.0005, verbose=True):
@@ -64,7 +65,7 @@ class SSNN:
    
             # Dilation
             d = np.exp((2 * np.random.uniform() -1) * np.log(8))
-            I[:,1] *= d
+            I[:,1] *= (d ** self.d_exp)
             
             I = pol2cart(I)
             
@@ -130,7 +131,7 @@ class SSNN:
         SSNN.fit(self, num_iters, initial_alpha, final_alpha, verbose)
         
         # Number of training iterations after point generation
-        g_iters = 2000
+        g_iters = 3000
 
         # Calculates a new initial alpha
         g_alpha = ((g_iters/(num_iters * 0.75)) * initial_alpha) + final_alpha
@@ -138,23 +139,27 @@ class SSNN:
         for i in range(steps):
 
             print("\nAnnealing new points...\n")
-            self.weights = point_gen(self.weights, 1, 'sierpinski')
+            self.weights = randomize(self.weights)
+            self.weights = point_gen(self.weights, 'sierpinski')
             self.weights = randomize(self.weights)
             self.n_nodes = self.weights.shape[0]
 
             if(i == steps-1):
                 # Slightly increase number of iterations on final run,
                 # almost like polishing everything up.
-                g_iters += 1000
-                g_alpha = ((g_iters/(num_iters * 0.75)) * initial_alpha) + final_alpha
+                g_iters += 2000
 
-            self.fit(g_iters, g_alpha, final_alpha, verbose)
+            self.fit(g_iters,0.033, 0.0005, verbose)
         
         if(verbose):
             print("\nFinal node count: " + str(self.weights.shape[0]))
             print("\nTotal time taken: " + str(time.time()-start))
         
         return 
+
+    def set_weights(self, X):
+        self.n_nodes = X.shape[0]
+        self.weights = X
 
     def display_tessellation(self, figsize=(15,15), s=1):
 

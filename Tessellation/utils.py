@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.spatial import KDTree, Delaunay
+from scipy.spatial import KDTree, Delaunay, Voronoi
 
 # Author: George Killick
 
@@ -71,17 +71,19 @@ def normalize(points):
     return points
 
 
-def randomize(points):
+def randomize(points, alpha=0.25):
 
     # randomly shifts the position of all points in the
     # retina tessellation to a maximum distance of the
     # average distance to their nearest neighbours.
 
-    nbs = KDTree(points)
+    x = np.copy(points)
 
-    distance, index = nbs.query(points, k=5)
+    nbs = KDTree(x)
 
-    eccentricity = np.linalg.norm(points, axis=1)
+    distance, index = nbs.query(x, k=5)
+
+    eccentricity = np.linalg.norm(x, axis=1)
     distance = np.mean(distance[:,1:],axis=1)
     
     delta_rho = distance * np.sqrt(np.random.uniform())
@@ -90,12 +92,12 @@ def randomize(points):
     delta_x = delta_rho * np.cos(delta_theta)
     delta_y = delta_rho * np.sin(delta_theta)
     
-    points[:,0] += (delta_x * 0.25)
-    points[:,1] += (delta_y * 0.25)
+    x[:,0] += (delta_x * alpha)
+    x[:,1] += (delta_y * alpha)
 
-    return normalize(points)
+    return normalize(x)
 
-def point_gen(points, num_iters=1, mode='sierpinski'):
+def point_gen(points, mode='sierpinski', concatenate=True):
 
     # Generates points using delaunay triangulation
     # and barycentre or sierpinski methods for generating
@@ -103,29 +105,56 @@ def point_gen(points, num_iters=1, mode='sierpinski'):
 
     points = points
 
-    for i in range(num_iters):
-        triangulation = Delaunay(points)
-        d_tri = points[triangulation.simplices]
+    triangulation = Delaunay(points)
+    d_tri = points[triangulation.simplices]
 
-        if(mode == 'barycentre'):
-            new_points = np.sum(d_tri,axis=1)/3
+    if(mode == 'barycentre'):
+        new_points = np.sum(d_tri,axis=1)/3
 
-        elif(mode == 'sierpinski'):
+    elif(mode == 'sierpinski'):
 
-            a = (d_tri[:,0] + d_tri[:,1])/2
-            b = (d_tri[:,1] + d_tri[:,2])/2
-            c = (d_tri[:,2] + d_tri[:,0])/2
+        a = (d_tri[:,0] + d_tri[:,1])/2
+        b = (d_tri[:,1] + d_tri[:,2])/2
+        c = (d_tri[:,2] + d_tri[:,0])/2
 
-            new_points = np.concatenate((a,b,c),axis=0)
-            new_points = np.unique(new_points, axis=0)
+        new_points = np.concatenate((a,b,c),axis=0)
+        new_points = np.unique(new_points, axis=0)
 
-        else:
-            print("Unknown mode; Choose from 'barycentre' or 'sierpinski'.")
-            return None
+    else:
+        print("Unknown mode; Choose from 'barycentre' or 'sierpinski'.")
+        return None
+    
+    if(concatenate):
+        new_points = np.concatenate((points, new_points),axis=0)
 
-        points = np.concatenate((points, new_points),axis=0)
+    return normalize(new_points)
 
-    return normalize(points)
+def relax(points, iters):
+    for i in range(0,iters):
+        vor = Voronoi(points)
+
+        vertices = vor.vertices
+        regions = vor.regions
+        p_reg_index = vor.point_region
+
+        new_points = []
+        for p in p_reg_index:
+            ver_ind = regions[p]
+
+            x = np.array(vertices[ver_ind])
+            new_points.append(np.mean(x,axis=0))
+
+
+        new_points = np.array(new_points)
+
+        new_points = cart2pol(new_points)
+        outside = np.where(new_points[:,1] > 1)
+        new_points[outside,1] = 1
+        new_points = pol2cart(new_points)
+        points[outside] = new_points[outside]
+
+    return points
+
 
 
 def dilate(points, fovea, f_density):
@@ -135,10 +164,6 @@ def dilate(points, fovea, f_density):
     x[:,1] *= (1/(fovea + ((2*np.pi*fovea)/f_density)) ** x[:,1] ** f_density)
     x = pol2cart(x)
     return normalize(x)
-
-
-
-
 
 
 
