@@ -21,11 +21,13 @@ A Python implementation of the self similar neural network that offers various f
 * PyFlann - Fast approximate nearest neighbour search that scales well to a large number of points
 * PyTorch - A vectorized euclidean distance calculation that runs on gpu, very fast even for large number of points (Max number of points currently limited by GPU available memory).
 
-![SSNN Tessellation](Assets/ssnn.png)
 
 ## Fibonacci
 Uses the golden ratio to calculate a uniform point distribution and then dilated with a dilating function to give a centre foveated retina topography.
-![Fibonacci Tessellation](Assets/fibonacci.png)
 
+### Dilating Function
+By applying the following function to the rho coordinate, for each point in it's polar form, each point can be dilated to give the whole retina a centre foveated structure
+
+![dilation function](Assets/dilation.png)
 
 
