@@ -1,7 +1,7 @@
 # Retina
 A software suite for generating retina tessellations
 
-## Dependancies
+## Dependencies
 
 * PyFlann
 * PyTorch
