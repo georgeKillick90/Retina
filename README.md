@@ -117,7 +117,5 @@ tessellation = hybrid(n_nodes, fovea, foveal_density, verbose=True)
 ## Dilating Function
 By applying the following function to the rho coordinate, for each point in it's polar form, each point can be dilated to give the whole retina a centre foveated structure
 
-![dilation function](Assets/dilation.png)
 
-
-<a href="https://www.codecogs.com/eqnedit.php?latex=g(x)&space;=&space;x\left&space;(&space;\frac{1}{f&space;&plus;&space;\frac{2\pi&space;f}{D}}&space;\right&space;)^{x^{D}}" target="_blank"><img src="https://latex.codecogs.com/gif.latex?g(x)&space;=&space;x\left&space;(&space;\frac{1}{f&space;&plus;&space;\frac{2\pi&space;f}{D}}&space;\right&space;)^{x^{D}}" title="g(x) = x\left ( \frac{1}{f + \frac{2\pi f}{D}} \right )^{x^{D}}" /></a>
+<a align=centre href="https://www.codecogs.com/eqnedit.php?latex=g(x)&space;=&space;x\left&space;(&space;\frac{1}{f&space;&plus;&space;\frac{2\pi&space;f}{D}}&space;\right&space;)^{x^{D}}" target="_blank"><img src="https://latex.codecogs.com/gif.latex?g(x)&space;=&space;x\left&space;(&space;\frac{1}{f&space;&plus;&space;\frac{2\pi&space;f}{D}}&space;\right&space;)^{x^{D}}" title="g(x) = x\left ( \frac{1}{f + \frac{2\pi f}{D}} \right )^{x^{D}}" /></a>
