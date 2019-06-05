@@ -25,7 +25,7 @@ A Python implementation of the self similar neural network that offers various f
 SSNN is treated as a python object and is initialized with the following paramaters
 
 ```python
-from Tessellation.SSNN import SSNN
+from Tessellation.ssnn import SSNN
 
 ret = SSNN(n_nodes, fovea, method='auto')
 ```
@@ -96,7 +96,7 @@ tessellation = fibonacci_sunflower(n_nodes)
 * n_nodes: the number of points in the tessellation. (Same as SSNN)
 
 #### fibonacci_retina:
-This function applies a dilating function to the fibonacci_sunflower points to produce a centre foveated distribution of points within a unit circle
+This function applies a dilating function (see below) to the fibonacci_sunflower points to produce a centre foveated distribution of points within a unit circle.
 
 ```python
 tessellation = fibonacci_retina(n_nodes, fovea, foveal_density)
@@ -119,3 +119,7 @@ By applying the following function to the rho coordinate, for each point in it's
 
 
 <a href="https://www.codecogs.com/eqnedit.php?latex=\inline&space;\dpi{150}&space;\LARGE&space;g(x)&space;=&space;x\left&space;(&space;\frac{1}{f&space;&plus;&space;\frac{2\pi&space;f}{D}}&space;\right&space;)^{x^{D}}" target="_blank"><img src="https://latex.codecogs.com/gif.latex?\inline&space;\dpi{150}&space;\LARGE&space;g(x)&space;=&space;x\left&space;(&space;\frac{1}{f&space;&plus;&space;\frac{2\pi&space;f}{D}}&space;\right&space;)^{x^{D}}" title="\LARGE g(x) = x\left ( \frac{1}{f + \frac{2\pi f}{D}} \right )^{x^{D}}" /></a>
+
+#### Where
+* f is the fovea radius
+* D is the foveal density
