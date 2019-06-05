@@ -1,5 +1,5 @@
 # Retina
-A software suite for generating retina tessellations
+Python code for generating retina tessellations
 
 ## Dependencies
 
@@ -67,7 +67,7 @@ You may also want to set the initial weights yourself such as in the case of the
 ```python
 ret.set_weights(X)
 ```
-X: is an nx2 numpy array of points in cartesian coordiantes
+* X: is an nx2 numpy array of points in cartesian coordiantes
 
 #### Retrieving Tessellation
 
@@ -112,10 +112,10 @@ This function initializes the SSNN weights with a fibonacci retina and anneals f
 ```python
 tessellation = hybrid(n_nodes, fovea, foveal_density, verbose=True)
 ```
-Same paramaters as the fibonacci_retina as well as a verbose paramater which is the same as the verbose paramater in SSNN.fit
+* Same paramaters as the fibonacci_retina as well as a verbose paramater which is the same as the verbose paramater in SSNN.fit
 
 
-### Dilating Function
+## Dilating Function
 By applying the following function to the rho coordinate, for each point in it's polar form, each point can be dilated to give the whole retina a centre foveated structure
 
 ![dilation function](Assets/dilation.png)
