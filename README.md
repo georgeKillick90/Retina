@@ -120,3 +120,4 @@ By applying the following function to the rho coordinate, for each point in it's
 ![dilation function](Assets/dilation.png)
 
 
+<a href="https://www.codecogs.com/eqnedit.php?latex=g(x)&space;=&space;x\left&space;(&space;\frac{1}{f&space;&plus;&space;\frac{2\pi&space;f}{D}}&space;\right&space;)^{x^{D}}" target="_blank"><img src="https://latex.codecogs.com/gif.latex?g(x)&space;=&space;x\left&space;(&space;\frac{1}{f&space;&plus;&space;\frac{2\pi&space;f}{D}}&space;\right&space;)^{x^{D}}" title="g(x) = x\left ( \frac{1}{f + \frac{2\pi f}{D}} \right )^{x^{D}}" /></a>
