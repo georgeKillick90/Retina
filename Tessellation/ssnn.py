@@ -27,11 +27,9 @@ class SSNN:
         
         self.n_nodes = n_nodes
         self.fovea = fovea
-        self.weights = SSNN._init_weights(n_nodes)
+        self.weights = SSNN.__init_weights(n_nodes)
         self.method = method
-        self.use_gpu = False
         self.flann = FLANN()
-        self.d_exp = 1
                       
     
     def fit(self, num_iters=20000, initial_alpha=0.1, final_alpha=0.0005, verbose=True):
@@ -49,11 +47,11 @@ class SSNN:
             Return: None.
         """
         
-        learning_rate = SSNN._alpha_schedule(initial_alpha, final_alpha, num_iters, num_iters//4)
+        learning_rate = SSNN.__alpha_schedule(initial_alpha, final_alpha, num_iters, num_iters//4)
 
         start = time.time()
 
-        get_neighbours = self._select_method(self.method)
+        get_neighbours = self.__select_method(self.method)
         
         for i in range(num_iters):
             
@@ -65,11 +63,11 @@ class SSNN:
    
             # Dilation
             d = np.exp((2 * np.random.uniform() -1) * np.log(8))
-            I[:,1] *= (d ** self.d_exp)
+            I[:,1] *= d
             
             I = pol2cart(I)
             
-            # Translation Wondering if different translation for each point makes any difference
+            # Translation 
             delta_theta = 2 * np.random.uniform() * np.pi
             delta_rho = np.random.uniform() * self.fovea
             
@@ -101,7 +99,7 @@ class SSNN:
 
         if(verbose):
             print("\nFinished.")
-            print("\nTime taken: " + str(time.time()-start))
+            print("Time taken: " + str(time.time()-start))
 
     def generative_fit(self, steps, num_iters=20000, initial_alpha=0.1, final_alpha=0.0005, verbose=True):
 
@@ -122,11 +120,11 @@ class SSNN:
 
         # Calculates the required starting node size for number of
         # generative iterations. 
-        # Node count x 4 for Sierpinski.
-        # Node count x 3 for Barycentre.
+        # Node count x 4 for Sierpinski. (approx)
+        # Node count x 3 for Barycentre. (approx)
 
         self.n_nodes = self.n_nodes // (4 ** steps)
-        self.weights = SSNN._init_weights(self.n_nodes)
+        self.weights = SSNN.__init_weights(self.n_nodes)
 
         SSNN.fit(self, num_iters, initial_alpha, final_alpha, verbose)
         
@@ -138,9 +136,9 @@ class SSNN:
 
         for i in range(steps):
 
-            print("\nAnnealing new points...\n")
+            print("\nAnnealing new points...")
             self.weights = randomize(self.weights)
-            self.weights = point_gen(self.weights, 'sierpinski')
+            self.weights = point_gen(self.weights, 'sierpinski') #point_gen method from utils.py
             self.weights = randomize(self.weights)
             self.n_nodes = self.weights.shape[0]
 
@@ -161,42 +159,8 @@ class SSNN:
         self.n_nodes = X.shape[0]
         self.weights = X
 
-    def display_tessellation(self, figsize=(15,15), s=1):
 
-        """ Class method wrapper for display_tessellation function
-            from utils for ease of use.
-
-            Parameters
-            ----------
-
-            figsize: Equivalent to matplotlib.pyplot figsize
-            s: size of points on scatter graph
-
-            Returns: None
-
-        """
-        display_tessellation(self.weights, figsize, s)
-        return
-    
-    def display_stats(self, figsize=(15,8), k=7):
-
-        """ Class method wrapper for display stats function
-            from utils for ease of use.
-
-            Parameters
-            ----------
-
-            figsize: Equivalent to matplotlib.pyplot figsize
-            k: number of neighbours to calculate  stats with.
-
-            Returns: None
-
-        """
-
-        display_stats(self.weights, figsize, k)
-        return
-
-    def _select_method(self, method):
+    def __select_method(self, method):
 
         """ Selects the nearest neighbour backend to use.
 
@@ -215,26 +179,24 @@ class SSNN:
 
         if (method == 'default'):
             print("Using Scipy.")
-            return self._bf_neighbours
+            return self.__bf_neighbours
 
         elif(method == 'flann'):
             print("Using FLANN.")
-            return self._flann_neighbours
+            return self.__flann_neighbours
 
         elif(method == 'auto'):
             if(self.n_nodes <= 256):
                 print("Using Scipy.")
-                return self._bf_neighbours
-
-            elif(self.n_nodes <= 20000 and self.use_gpu):
-                print("Using GPU accelerated Pytorch.")
-                return self._torch_neighbours
+                return self.__bf_neighbours
 
             else:
                 print("Using FLANN.")
-                return self._flann_neighbours
+                return self.__flann_neighbours
+        else:
+        	print("Unknown method, using FLANN backend.")
 
-    def _bf_neighbours(self, X, Y): 
+    def __bf_neighbours(self, X, Y): 
 
         """ Canonical wrapper for scipy's bruteforce nearest 
             neighbour search.
@@ -252,7 +214,7 @@ class SSNN:
         indeces = np.argmin(dists, axis=1)
         return indeces
 
-    def _flann_neighbours(self, X, Y):
+    def __flann_neighbours(self, X, Y):
 
         """ Canonical wrapper for FLANN nearest neighbour 
             search.
@@ -269,7 +231,7 @@ class SSNN:
         return indeces
 
     @staticmethod
-    def _init_weights(n_nodes):
+    def __init_weights(n_nodes):
 
         """ Initializes weights for the SSNN
 
@@ -288,7 +250,7 @@ class SSNN:
 
 
     @staticmethod
-    def _alpha_schedule(initial_alpha, final_alpha, num_iters, split):
+    def __alpha_schedule(initial_alpha, final_alpha, num_iters, split):
 
         """ Creates a learning rate schedule for the SSNN.
             Constant learning rate for first "split" of iterations
